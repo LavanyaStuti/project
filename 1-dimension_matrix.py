@@ -1,9 +1,8 @@
-import gudhi
+import gudhi, os
 from gudhi.representations.metrics import pairwise_persistence_diagram_distances
 import numpy as np
-import matplotlib.pyplot as plt
 import pandas as pd
-import seaborn as sns
+import matplotlib.pyplot as plt
 
 # Read the distance matrices from CSV
 distance_matrix_file1 = 'belt_501.csv'
@@ -76,49 +75,50 @@ diag8_1d = simplex_tree8.persistence_intervals_in_dimension(1)
 diag9_1d = simplex_tree9.persistence_intervals_in_dimension(1)
 diag10_1d = simplex_tree10.persistence_intervals_in_dimension(1)
 
-# # Ensure that the diagrams are in the correct format
-# diag1_1d = [(float(interval[0]), float(interval[1])) for interval in diag1_1d]
-# diag2_1d = [(float(interval[0]), float(interval[1])) for interval in diag2_1d]
-# diag3_1d = [(float(interval[0]), float(interval[1])) for interval in diag3_1d]
-# diag4_1d = [(float(interval[0]), float(interval[1])) for interval in diag4_1d]
-# diag5_1d = [(float(interval[0]), float(interval[1])) for interval in diag5_1d]
-# diag6_1d = [(float(interval[0]), float(interval[1])) for interval in diag6_1d]
-# diag7_1d = [(float(interval[0]), float(interval[1])) for interval in diag7_1d]
-# diag8_1d = [(float(interval[0]), float(interval[1])) for interval in diag8_1d]
-# diag9_1d = [(float(interval[0]), float(interval[1])) for interval in diag9_1d]
-# diag10_1d = [(float(interval[0]), float(interval[1])) for interval in diag10_1d]
-
 # Define labels for each row and column
-labels = ['belt', 'bread', 'chair', 'cloud', 'cup', 'tasse', 'brot', 'wolke', 'gürtel', 'stuhl']
+labels = ['belt', 'gürtel', 'bread', 'brot', 'chair', 'stuhl', 'cloud', 'wolke', 'cup', 'tasse']
 
-# Use pairwise_persistence_diagram_distances with the 'wasserstein' metric for 1-dimensional
+# Use pairwise_persistence_diagram_distances with the 'wasserstein' metric
 distances_matrix_1d = pairwise_persistence_diagram_distances(
     X=[diag1_1d, diag2_1d, diag3_1d, diag4_1d, diag5_1d, diag6_1d, diag7_1d, diag8_1d, diag9_1d, diag10_1d],
     Y=None,
     metric='wasserstein'
 )
 
-# Set diagonal values to zero
-np.fill_diagonal(distances_matrix_1d, 0)
-
-# Replace "inf" values with a finite value (e.g., 500)
-finite_value = 500
-distances_matrix_1d[np.isinf(distances_matrix_1d)] = finite_value
-
 # Set a manual range for color coding
 vmin = 0  # Minimum value
 vmax = 4  # Maximum value, adjust as needed
 
-# Create Pandas DataFrame
-df_distances = pd.DataFrame(distances_matrix_1d, index=labels, columns=labels)
+# Set diagonal values to zero
+np.fill_diagonal(distances_matrix_1d, np.nan)
 
-# Display the DataFrame
-print("\n1-Dimensional Wasserstein Distances Matrix:")
-print(df_distances)
+ # Print the matrix with words and Wasserstein distances
+print("Wasserstein Distances Matrix:")
+print('\t'.join(labels))
+for i in range(distances_matrix_1d.shape[0]):
+    print(labels[i], end='\t')
+    for j in range(distances_matrix_1d.shape[1]):
+        if np.isnan(distances_matrix_1d[i, j]):
+            print('NaN', end='\t')
+        else:
+            print(f'{distances_matrix_1d[i, j]:.4f}', end='\t')
+    print()
 
-# Plot the distances matrix as a heatmap
-plt.figure(figsize=(10, 8))
-sns.heatmap(df_distances, cmap='viridis', annot=True, fmt=".4f", vmin=vmin, vmax=vmax)
-
+# Plot the distances matrix as an image
+plt.figure(figsize=(8,8))
+plt.imshow(distances_matrix_1d, cmap='viridis', origin='upper', interpolation='nearest')
+plt.colorbar( fraction=0.045)
 plt.title('Pairwise 1-Dimensional Wasserstein Distances Matrix')
+
+# Set ticks and labels for both x and y axes
+plt.xticks(np.arange(len(labels)), labels, rotation=45, ha="right")
+plt.yticks(np.arange(len(labels)), labels)
+
+# Adding annotations
+for i in range(distances_matrix_1d.shape[0]):
+    for j in range(distances_matrix_1d.shape[1]):
+        plt.text(j, i, f'{distances_matrix_1d[i, j]:.2f}', ha='center', va='center', color='white')
+
+# plt.tight_layout()
+# Show the plot
 plt.show()
